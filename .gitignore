@@ -24,3 +24,6 @@ evals/scratch/
 # Local vector index / caches
 *.faiss
 .cache/
+
+# Runtime state (approval queue) - like a local DB, not source
+data/runtime/
