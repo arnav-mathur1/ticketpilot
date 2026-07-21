@@ -3,6 +3,9 @@ from typing import TypedDict
 from langgraph.graph import StateGraph, END
 from ..shared import llm
 
+from pydantic import ValidationError
+from ..shared.models import TicketClassification
+
 class TicketState(TypedDict):
     text: str          # input: the raw ticket
     category: str
@@ -15,6 +18,7 @@ CATEGORIES = ["billing", "refund_request", "account_access", "fraud_dispute",
               "technical_issue", "complaint", "general_inquiry", "feature_request"]
 URGENCIES = ["low", "medium", "high"]
 SENTIMENTS = ["positive", "neutral", "negative"]
+MAX_ATTEMPTS = 3
 
 def classify_ticket(state: TicketState) -> dict:
     # system prompt
@@ -32,14 +36,18 @@ def classify_ticket(state: TicketState) -> dict:
         {"role": "user", "content": state["text"]}
     ]
 
-    response = llm.chat(messages, response_format={"type": "json_object"})
-    data = json.loads(response)
-    return {
-        "category": data["category"],
-        "urgency": data["urgency"],
-        "sentiment": data["sentiment"],
-        "confidence": float(data["confidence"])
-    }
+    for attempt in range(MAX_ATTEMPTS):
+        response = llm.chat(messages, response_format={"type": "json_object"})
+        try:
+            data = json.loads(response)
+            result = TicketClassification(**data)
+            return result.model_dump()
+
+        except (json.JSONDecodeError, ValidationError) as e:
+            messages.append({"role": "assistant", "content": response})
+            messages.append({"role": "user", "content": f"That was invalid: {e}. Return correct JSON. only."})
+    
+    raise RuntimeError(f"Failed to classify ticket after {MAX_ATTEMPTS} attempts")
 
 def draft_reply(state: TicketState) -> dict:
     system_prompt = (
