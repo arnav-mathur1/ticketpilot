@@ -1,0 +1,57 @@
+{
+  "schema": {
+    "category": ["billing", "refund_request", "account_access", "fraud_dispute", "technical_issue", "complaint", "general_inquiry", "feature_request"],
+    "urgency": ["low", "medium", "high"],
+    "sentiment": ["positive", "neutral", "negative"],
+    "note": "expected_* fields are golden labels for the Phase 5 eval harness. sensitive=true means the escalation gate must route to human review regardless of confidence (money, disputes, account access, or legal)."
+  },
+  "tickets": [
+    {"id": "T001", "text": "I was billed $59.98 this month but my plan is supposed to be $29.99. Why was I charged twice?", "expected_category": "billing", "expected_urgency": "medium", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T002", "text": "Can you send me a receipt for last month's payment? I need it for an expense report.", "expected_category": "billing", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T003", "text": "There's a 'service fee' of $8.50 on my latest statement that nobody told me about. Please explain.", "expected_category": "billing", "expected_urgency": "medium", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T004", "text": "How do I switch my payment method from a card to a bank transfer?", "expected_category": "billing", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T005", "text": "I upgraded halfway through the month and the proration on my invoice looks wrong. Can someone check the math?", "expected_category": "billing", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": true},
+    {"id": "T006", "text": "Why did my subscription jump from $19.99 to $24.99 with no notice at all?", "expected_category": "billing", "expected_urgency": "medium", "expected_sentiment": "negative", "sensitive": true},
+
+    {"id": "T007", "text": "I'd like to cancel my premium plan and get a refund. It's not what I expected. What's the process?", "expected_category": "refund_request", "expected_urgency": "medium", "expected_sentiment": "neutral", "sensitive": true},
+    {"id": "T008", "text": "Your agent promised me a refund three weeks ago and I still haven't seen a cent. Where is my money?", "expected_category": "refund_request", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T009", "text": "I cancelled in February but was still charged for March. I want that month refunded.", "expected_category": "refund_request", "expected_urgency": "medium", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T010", "text": "I demand a full refund immediately, and my attorney will be in touch about your misleading pricing.", "expected_category": "refund_request", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T011", "text": "My 80-year-old father was talked into buying your premium tier he doesn't understand. Please cancel and refund him.", "expected_category": "refund_request", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+
+    {"id": "T012", "text": "I'm locked out of my account. It keeps saying my password is wrong even though I'm certain it's right.", "expected_category": "account_access", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T013", "text": "I just got a login-from-a-new-device alert that I did NOT trigger. Please lock my account now.", "expected_category": "account_access", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T014", "text": "I forgot which email I used to sign up. How can I recover my account?", "expected_category": "account_access", "expected_urgency": "medium", "expected_sentiment": "neutral", "sensitive": true},
+    {"id": "T015", "text": "New phone, and I lost my authenticator app. How do I get my 2FA set back up?", "expected_category": "account_access", "expected_urgency": "medium", "expected_sentiment": "neutral", "sensitive": true},
+    {"id": "T016", "text": "Please permanently delete my account and all of my associated data.", "expected_category": "account_access", "expected_urgency": "medium", "expected_sentiment": "neutral", "sensitive": true},
+    {"id": "T017", "text": "My SMS verification codes aren't arriving and I need to authorize a transfer today.", "expected_category": "account_access", "expected_urgency": "high", "expected_sentiment": "neutral", "sensitive": true},
+
+    {"id": "T018", "text": "There's a $520 charge on my card from Meridian that I never authorized. Reverse it or I'm calling my bank.", "expected_category": "fraud_dispute", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T019", "text": "Four charges labeled MERIDIAN*PENDING for $75 each that I don't recognize are on my statement.", "expected_category": "fraud_dispute", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T020", "text": "SOMEONE DRAINED MY ACCOUNT $3000 GONE OVERNIGHT PLEASE HELP RIGHT NOW", "expected_category": "fraud_dispute", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T021", "text": "I believe my card details were used fraudulently through your platform last week. This needs to be investigated.", "expected_category": "fraud_dispute", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+
+    {"id": "T022", "text": "The mobile app crashes every time I open the Transactions tab. iPhone 14, latest app version.", "expected_category": "technical_issue", "expected_urgency": "medium", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T023", "text": "Exporting my report to CSV just downloads an empty file. Chrome on Windows 11.", "expected_category": "technical_issue", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T024", "text": "The entire site is just a spinning loader right now. Is there an outage?", "expected_category": "technical_issue", "expected_urgency": "high", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T025", "text": "Dashboard charts render as blank white boxes in Safari.", "expected_category": "technical_issue", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T026", "text": "The search sometimes returns results from other users' workspaces. That seems like a privacy problem.", "expected_category": "technical_issue", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+    {"id": "T027", "text": "The two-factor page throws a 500 error every time I click submit.", "expected_category": "technical_issue", "expected_urgency": "medium", "expected_sentiment": "neutral", "sensitive": false},
+
+    {"id": "T028", "text": "Your service has gone down three times this month. Completely unacceptable for something I pay for.", "expected_category": "complaint", "expected_urgency": "medium", "expected_sentiment": "negative", "sensitive": false},
+    {"id": "T029", "text": "I've been on hold with phone support for two hours. Twice. Worst support experience of my life.", "expected_category": "complaint", "expected_urgency": "medium", "expected_sentiment": "negative", "sensitive": false},
+    {"id": "T030", "text": "'Premium support' that takes five days to answer an email. Really feeling the premium here.", "expected_category": "complaint", "expected_urgency": "low", "expected_sentiment": "negative", "sensitive": false},
+    {"id": "T031", "text": "I received another customer's account statement in my email. You have a serious data problem.", "expected_category": "complaint", "expected_urgency": "high", "expected_sentiment": "negative", "sensitive": true},
+
+    {"id": "T032", "text": "Hi! Just wondering what your customer support hours are. Thanks!", "expected_category": "general_inquiry", "expected_urgency": "low", "expected_sentiment": "positive", "sensitive": false},
+    {"id": "T033", "text": "How do I update my billing address?", "expected_category": "general_inquiry", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T034", "text": "Does the free tier include API access?", "expected_category": "general_inquiry", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T035", "text": "What file formats can I use to upload documents?", "expected_category": "general_inquiry", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T036", "text": "hi", "expected_category": "general_inquiry", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T037", "text": "Can I get a copy of all my transactions from January to March for my accountant?", "expected_category": "general_inquiry", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+
+    {"id": "T038", "text": "Would love a dark mode for the dashboard. My eyes would thank you.", "expected_category": "feature_request", "expected_urgency": "low", "expected_sentiment": "positive", "sensitive": false},
+    {"id": "T039", "text": "Please add PDF export for reports. Excel-only is limiting for our team.", "expected_category": "feature_request", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false},
+    {"id": "T040", "text": "It'd be great if monthly invoices could be emailed automatically instead of manual download.", "expected_category": "feature_request", "expected_urgency": "low", "expected_sentiment": "neutral", "sensitive": false}
+  ]
+}

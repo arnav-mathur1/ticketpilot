@@ -1,0 +1,31 @@
+Disputes, Fraud & Support Service Policy
+
+## 1. Reporting unauthorized transactions
+Customers must report unrecognized or unauthorized transactions as soon as possible. 
+Reports made within 60 days of the statement date are covered by our zero-liability guarantee: the customer is not responsible for verified unauthorized charges. 
+During investigation, the disputed amount is provisionally credited to the account within 2 business days of the report.
+
+## 2. Dispute investigation timeline
+Fraud and dispute investigations are completed within 10 business days for amounts under $500, and within 30 calendar days for larger amounts or complex cases. 
+Customers receive a written outcome. If the dispute is denied, the provisional credit is reversed with 5 days' notice and the customer may appeal once with additional evidence.
+
+## 3. Chargebacks
+If a customer initiates a chargeback with their bank instead of (or in addition to) a dispute, the dispute is paused until the chargeback resolves. 
+Filing both in parallel does not speed up resolution.
+
+## 4. Support channels and response times
+Support is available via in-app chat and email 24/7, and by phone Monday–Friday, 8:00–20:00 US Eastern. 
+Target first-response times: 1 hour for urgent security or fraud issues, 8 hours for billing issues, and 24 hours for general inquiries. 
+Premium plan customers receive priority routing with targets of 30 minutes / 4 hours / 12 hours respectively.
+
+## 5. Escalations and complaints
+Customers dissatisfied with a support outcome may request escalation to a supervisor; escalations receive a response within 2 business days. 
+Formal complaints can be submitted in writing and receive a written response within 15 business days, including information about external dispute-resolution options where applicable.
+
+## 6. Service availability
+We target 99.9% monthly uptime for the customer dashboard and API. Planned maintenance is announced at least 48 hours in advance and scheduled outside 06:00–22:00 US Eastern. 
+Service credits for months below 99.5% uptime are available to Premium customers on request: 5% of the monthly fee per 0.1% of missed availability, capped at 50%.
+
+## 7. API and platform basics
+The free tier does not include API access; API access begins with the Plus plan (rate limit 60 requests/minute) and Premium (600 requests/minute). 
+Supported document upload formats are PDF, PNG, JPG, and CSV, up to 25 MB per file.

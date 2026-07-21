@@ -1,0 +1,26 @@
+# Environments & secrets
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# AWS / SAM
+.aws-sam/
+samconfig.toml.bak
+
+# Eval artifacts (keep history CSVs committed, ignore scratch)
+evals/scratch/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local vector index / caches
+*.faiss
+.cache/

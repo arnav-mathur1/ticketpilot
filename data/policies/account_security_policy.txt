@@ -1,0 +1,36 @@
+Account Security and Access Policy
+
+## 1. Password resets
+Customers can reset their password from the login page via a reset link emailed to their registered address. 
+Reset links expire after 30 minutes. After 5 failed login attempts, the account is temporarily locked for 15 minutes.
+After 10 failed attempts within an hour, the account is locked until the customer completes a password reset.
+
+## 2. Two-factor authentication (2FA)
+2FA is mandatory for all accounts. Supported methods are authenticator apps (recommended) and SMS. 
+If SMS codes are not arriving, customers should verify their phone number on file.
+Support can temporarily switch the account to email-based codes after identity verification.
+
+## 3. Lost 2FA device
+A customer who loses access to their authenticator app (for example, after getting a new phone) must complete identity re-verification.
+This includes a government ID upload plus a confirmation code sent to the registered email. 
+Re-verification is reviewed within 1 business day. Backup codes generated at 2FA setup can be used to log in immediately and re-enroll a new device without re-verification.
+
+## 4. Suspicious activity and account compromise
+If suspicious activity is detected (login from a new country, unusual transaction pattern), an alert email is sent and we may proactively freeze the account. 
+Customers who believe their account is compromised should use the "Freeze my account" link in any security alert email or contact support.
+This will immediately: (a) lock the account, (b) invalidate all sessions, and (c) block outbound transfers pending review. 
+Compromised-account reviews are prioritized and completed within 4 business hours.
+
+## 5. Account recovery without email access
+If a customer no longer has access to their registered email address, recovery requires identity verification with government ID and may take up to 3 business days. 
+Support cannot change the email address on an account based on a request alone.
+
+## 6. Account deletion and data
+Customers may request permanent account deletion at any time. 
+Deletion is completed within 30 days, after which personal data is removed except records we are legally required to retain.
+Transaction records are retained for 7 years under financial regulations. 
+Deletion cannot be reversed after the 30-day window closes; within the window, the customer can cancel the request by logging in.
+
+## 7. Data access requests
+Customers may request an export of their personal data and transaction history from the Privacy page; exports are delivered within 72 hours as a downloadable archive. 
+Statements for specific date ranges can also be downloaded directly from the Documents page.

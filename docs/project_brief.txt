@@ -1,0 +1,17 @@
+TicketPilot Overview
+
+Problem:
+Support services at financial companies receive high volumes of tickets with varying urgency. Manually triaging every ticket is a slow process.
+However, fully automating the replies is unsafe because the industry is highly regulated.
+
+Solution:
+TicketPilot is a deployable 2-fold solution.
+1. Triage Agent: classifies the incoming tickets (category, urgency), drafts a reply, and attaches a confidence score.
+High confidence, non-sensitive tickets get an auto-draft reply released automatically.
+Low-confidence or sensitive tickets (such as involving money, disputes), are routed to a human.
+
+2. Policy Q&A Agent (RAG): answers natural-language questions from a policy/FAQ document list, with citations to the exact document/section.
+
+Users:
+1. Support agents (the humans on the Triage Agent side): they sit in front of the approval dashboard, see the tickets the agent pre-sorted, and click approve/reject on the drafted replies.
+2. Customers/internal staff (the humans on the RAG Agent side): they ask policy questions and get answers with citations.
