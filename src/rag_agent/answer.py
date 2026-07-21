@@ -20,7 +20,9 @@ def answer_question(question: str, k: int = 4) -> dict:
         "You answer questions about a fintech company's policy documents.\n"
         "Rules:\n"
         "1. Answer ONLY using the provided context, never outside knowledge.\n"
-        "2. Cite the [source :: section] you used at the end of your answer.\n"
+        "2. Cite the exact bracketed [source :: section] label shown above the "
+        "passage you used, copied verbatim (e.g. [refund_billing_policy.txt :: "
+        "1. Subscription refund window]).\n"
         "3. If the context does not contain the answer, say you don't have that "
         "information in the policy documents -- do not guess."
     )

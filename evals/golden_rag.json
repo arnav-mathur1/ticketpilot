@@ -1,0 +1,68 @@
+{
+  "note": "Golden RAG eval set. 'reference_answer' is the ground truth for LLM-as-judge scoring. 'expected_source' is the policy file the answer's citation should reference. When 'unanswerable' is true, the correct behavior is for the agent to REFUSE (the corpus does not contain the answer).",
+  "questions": [
+    {"id": "Q001", "question": "What is the refund window for a subscription?",
+     "reference_answer": "A full refund is available within 14 calendar days of the charge. Between 15 and 30 days a prorated refund covering the unused portion is available. After 30 days there is no refund except where required by law or for a verified billing error.",
+     "expected_source": "refund_billing_policy.txt", "unanswerable": false},
+
+    {"id": "Q002", "question": "I was charged twice for the same month. How long until I get the duplicate charge back?",
+     "reference_answer": "A verified duplicate charge is refunded in full within 5-7 business days of the report being verified.",
+     "expected_source": "refund_billing_policy.txt", "unanswerable": false},
+
+    {"id": "Q003", "question": "How is my bill prorated if I upgrade in the middle of the month?",
+     "reference_answer": "On a mid-cycle upgrade, the unused value of the current plan is credited against the new plan's price, calculated to the day. Downgrades take effect at the next billing cycle with no mid-cycle credit.",
+     "expected_source": "refund_billing_policy.txt", "unanswerable": false},
+
+    {"id": "Q004", "question": "What are the plan prices, and are there any extra fees?",
+     "reference_answer": "Basic is $9.99/month, Plus is $19.99/month, and Premium is $29.99/month. There are no processing, setup, or cancellation fees on standard consumer plans.",
+     "expected_source": "refund_billing_policy.txt", "unanswerable": false},
+
+    {"id": "Q005", "question": "How will my refund be paid and how long does it take?",
+     "reference_answer": "Refunds are issued to the original payment method only, taking 5-7 business days for cards and 1-3 business days for bank transfers.",
+     "expected_source": "refund_billing_policy.txt", "unanswerable": false},
+
+    {"id": "Q006", "question": "How long is a password reset link valid, and what happens after failed login attempts?",
+     "reference_answer": "Reset links expire after 30 minutes. After 5 failed login attempts the account is locked for 15 minutes; after 10 failed attempts within an hour it is locked until the customer completes a password reset.",
+     "expected_source": "account_security_policy.txt", "unanswerable": false},
+
+    {"id": "Q007", "question": "I got a new phone and lost my authenticator app. How do I get back into my account?",
+     "reference_answer": "You can use backup codes generated at 2FA setup to log in immediately and re-enroll a new device. Otherwise you must complete identity re-verification (government ID upload plus an email confirmation code), which is reviewed within 1 business day.",
+     "expected_source": "account_security_policy.txt", "unanswerable": false},
+
+    {"id": "Q008", "question": "If I delete my account, how long does it take and how long is my data kept?",
+     "reference_answer": "Deletion is completed within 30 days; it can be cancelled by logging in within that window. Transaction records are retained for 7 years under financial regulations.",
+     "expected_source": "account_security_policy.txt", "unanswerable": false},
+
+    {"id": "Q009", "question": "How can I export my personal data and how long does it take?",
+     "reference_answer": "You can request an export of your personal data and transaction history from the Privacy page; it is delivered within 72 hours as a downloadable archive.",
+     "expected_source": "account_security_policy.txt", "unanswerable": false},
+
+    {"id": "Q010", "question": "There's a charge I don't recognize. What is the reporting window and am I liable?",
+     "reference_answer": "Report unauthorized transactions within 60 days of the statement date to be covered by the zero-liability guarantee. The disputed amount is provisionally credited within 2 business days during investigation.",
+     "expected_source": "dispute_support_policy.txt", "unanswerable": false},
+
+    {"id": "Q011", "question": "How long does a fraud dispute investigation take?",
+     "reference_answer": "Investigations are completed within 10 business days for amounts under $500, and within 30 calendar days for larger amounts or complex cases.",
+     "expected_source": "dispute_support_policy.txt", "unanswerable": false},
+
+    {"id": "Q012", "question": "What are your support response times for an urgent fraud issue versus a general question?",
+     "reference_answer": "Target first-response times are 1 hour for urgent security or fraud issues, 8 hours for billing, and 24 hours for general inquiries. Premium customers get 30 minutes / 4 hours / 12 hours.",
+     "expected_source": "dispute_support_policy.txt", "unanswerable": false},
+
+    {"id": "Q013", "question": "Does the free tier include API access, and what file formats can I upload?",
+     "reference_answer": "The free tier does not include API access; it begins with Plus (60 requests/minute) and Premium (600 requests/minute). Supported upload formats are PDF, PNG, JPG, and CSV, up to 25 MB per file.",
+     "expected_source": "dispute_support_policy.txt", "unanswerable": false},
+
+    {"id": "Q014", "question": "What is the company's current stock price?",
+     "reference_answer": "Not covered by the policy documents; the agent should refuse.",
+     "expected_source": null, "unanswerable": true},
+
+    {"id": "Q015", "question": "Who is the CEO of the company?",
+     "reference_answer": "Not covered by the policy documents; the agent should refuse.",
+     "expected_source": null, "unanswerable": true},
+
+    {"id": "Q016", "question": "Can I open a mortgage or a savings account through your service?",
+     "reference_answer": "Not covered by the policy documents; the agent should refuse.",
+     "expected_source": null, "unanswerable": true}
+  ]
+}

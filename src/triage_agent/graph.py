@@ -25,7 +25,10 @@ def classify_ticket(state: TicketState) -> dict:
     system_prompt = f"""
     You are a support-ticket triage classifier. Classify the ticket and respond only as a JSON object with the following fields:
     - category: the category of the ticket, one of {CATEGORIES}
-    - urgency: the urgency of the ticket, one of {URGENCIES}
+    - urgency: one of {URGENCIES}, judged as:
+        low    = routine, no time pressure (general questions, feature requests, minor cosmetic bugs)
+        medium = needs attention but not an emergency (billing discrepancies, non-urgent account changes)
+        high   = time-sensitive or money/access at risk (fraud, lockouts, active outages, legal threats)
     - sentiment: the sentiment of the ticket, one of {SENTIMENTS}
     - confidence: the confidence in the classification, a float between 0 and 1
     """
