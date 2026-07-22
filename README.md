@@ -66,21 +66,6 @@ Everything is **serverless** — nothing runs until a request comes in, so it co
 
 ---
 
-## Results (measured)
-
-Real before→after numbers from the eval harness (`evals/`), improved by prompt iteration:
-
-| What's measured | Result |
-|---|---|
-| Ticket urgency accuracy | **80%** (up from 68%) |
-| Ticket category accuracy | **90%** |
-| Answer quality (LLM-judged, 1–5) | **4.9 / 5** |
-| **Citation accuracy** (answer points to the right policy) | **100%** (up from 31%) |
-| Refusal accuracy (correctly says "not in the docs") | **100%** |
-| Repeat-question latency (with caching) | **2846 ms → 0.2 ms** |
-
----
-
 ## Tech stack
 
 - **Agents / LLM:** Python, [LangGraph](https://langchain-ai.github.io/langgraph/), OpenAI `gpt-4o-mini` + `text-embedding-3-small`
@@ -133,16 +118,6 @@ dashboard/        single-file web UI
 tests/            pytest unit tests (run in CI)
 docs/             project brief + ops runbook
 ```
-
----
-
-## Engineering notes
-
-- **Grounding guarantee:** the RAG agent refuses when the best-matching policy chunk scores below a threshold — it would rather say "I don't have that" than hallucinate.
-- **Escalation gate:** a ticket is sent to a human if confidence is low **or** the category/keywords are sensitive (billing, fraud, legal threats). Tuned to never *under*-escalate risky tickets.
-- **Caching:** identical questions return from cache instantly; reworded questions hit a **semantic cache** (cosine similarity), skipping the model entirely.
-- **Observability:** every action emits a structured JSON log to CloudWatch; alarms fire on triage errors or dead-letter messages (see `docs/runbook.txt`).
-- **Cost-aware:** on-demand DynamoDB, arm64/Graviton Lambdas, no idle cost, budget alarms.
 
 ## License
 
