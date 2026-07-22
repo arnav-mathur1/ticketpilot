@@ -10,8 +10,10 @@ import uuid
 
 from .triage_agent.handler import approve_ticket, reject_ticket
 from .shared import store
+from .shared.logging_utils import get_logger, log_event
 
 _CORS = {"Content-Type": "application/json"}   # CORS handled at the HTTP API level
+logger = get_logger("api")
 
 
 def intake_handler(event, context):
@@ -27,6 +29,7 @@ def intake_handler(event, context):
         QueueUrl=os.environ["QUEUE_URL"],
         MessageBody=json.dumps({"ticket_id": ticket_id, "text": text}),
     )
+    log_event(logger, "ticket_queued", ticket_id=ticket_id)
     return {"statusCode": 202, "headers": _CORS,
             "body": json.dumps({"ticket_id": ticket_id, "status": "queued"})}
 
@@ -52,4 +55,5 @@ def approvals_handler(event, context):
     except KeyError:
         return {"statusCode": 404, "headers": _CORS,
                 "body": json.dumps({"error": f"ticket {ticket_id} not found"})}
+    log_event(logger, "ticket_decided", ticket_id=ticket_id, decision=decision)
     return {"statusCode": 200, "headers": _CORS, "body": json.dumps(rec, default=str)}

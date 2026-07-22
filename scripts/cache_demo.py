@@ -1,4 +1,4 @@
-"""Phase 8 demo: show the RAG query cache turning repeated/reworded questions
+"""Show the RAG query cache turning repeated/reworded questions
 into near-instant, zero-cost answers. Run:  python scripts/cache_demo.py
 """
 import json

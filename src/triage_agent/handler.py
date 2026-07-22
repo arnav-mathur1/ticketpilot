@@ -1,8 +1,11 @@
 import json
 
 from ..shared import store
+from ..shared.logging_utils import get_logger, log_event
 from .graph import run_triage
 from .escalation import should_escalate
+
+logger = get_logger("triage.handler")
 #
 # store gives: store.save(record), store.set_status(id, status), and the status constants store.PENDING, store.APPROVED, store.REJECTED, store.AUTO_RELEASED
 
@@ -32,12 +35,15 @@ def reject_ticket(ticket_id: str) -> dict:
 
 
 def handler(event, context):
-    """SQS-triggered Lambda entrypoint (Phase 6).
+    """SQS-triggered Lambda entrypoint.
 
     Each SQS record is {"ticket_id": ..., "text": ...}. Raising on failure lets
     SQS redeliver the message (at-least-once, retry-safe processing).
     """
     for record in event.get("Records", []):
         body = json.loads(record["body"])
-        process_ticket(body["ticket_id"], body["text"])
+        rec = process_ticket(body["ticket_id"], body["text"])
+        log_event(logger, "ticket_processed", ticket_id=rec["id"],
+                  category=rec["category"], urgency=rec["urgency"],
+                  escalated=rec["escalated"], status=rec["status"])
     return {"statusCode": 200}

@@ -2,8 +2,10 @@
 import json
 
 from .answer import answer_question
+from ..shared.logging_utils import get_logger, log_event
 
 _CORS = {"Content-Type": "application/json"}   # CORS handled at the HTTP API level
+logger = get_logger("rag.handler")
 
 
 def handler(event, context):
@@ -13,4 +15,6 @@ def handler(event, context):
         return {"statusCode": 400, "headers": _CORS,
                 "body": json.dumps({"error": "question required"})}
     result = answer_question(question)
+    log_event(logger, "question_answered", refused=result["refused"],
+              cache=result.get("cache"), n_citations=len(result.get("citations", [])))
     return {"statusCode": 200, "headers": _CORS, "body": json.dumps(result)}

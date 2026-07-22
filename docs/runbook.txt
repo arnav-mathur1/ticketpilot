@@ -1,0 +1,49 @@
+TicketPilot — Operations Runbook
+==========================================
+
+WHAT'S MONITORED
+- CloudWatch alarm "ticketpilot-triage-errors": TriageFunction threw >=1 error in 5 min.
+- CloudWatch alarm "ticketpilot-dlq-not-empty": a ticket failed 3 attempts -> dead-letter queue.
+  (Both are visible in the CloudWatch console. To be emailed, add an SNS topic +
+   subscription and set it as AlarmActions in infra/template.yaml.)
+
+STRUCTURED LOGS (JSON) — CloudWatch Logs Insights
+Every business event is one JSON line: event name in "msg", fields alongside.
+Log groups: /aws/lambda/ticketpilot-TriageFunction-*, .../RagFunction-*, .../IntakeFunction-*, .../ApprovalsFunction-*
+
+  # escalation rate over time
+  fields ticket_id, category, escalated
+  | filter msg = "ticket_processed"
+  | stats count() as total, sum(escalated) as escalated by bin(1h)
+
+  # RAG cache hit-rate and refusals
+  fields cache, refused
+  | filter msg = "question_answered"
+  | stats count() as answered, sum(refused) as refused by bin(1h)
+
+WHEN "triage-errors" FIRES
+1. Tail logs:
+     aws logs tail "$(aws logs describe-log-groups \
+       --log-group-name-prefix /aws/lambda/ticketpilot-TriageFunction \
+       --query 'logGroups[0].logGroupName' --output text)" --since 30m --region us-east-1
+2. Likely causes: OpenAI outage/quota, missing/rotated SSM key, DynamoDB throttling.
+3. Failed messages auto-retry via SQS (up to 3x), then move to the DLQ (next section).
+
+WHEN "dlq-not-empty" FIRES (poison messages)
+1. Inspect:
+     aws sqs receive-message --queue-url \
+       https://sqs.us-east-1.amazonaws.com/286664220231/ticketpilot-tickets-dlq \
+       --max-number-of-messages 10 --region us-east-1
+2. Fix the root cause (deploy a fix if it's a code/config bug).
+3. Redrive DLQ -> main queue:
+     aws sqs start-message-move-task \
+       --source-arn arn:aws:sqs:us-east-1:286664220231:ticketpilot-tickets-dlq \
+       --region us-east-1
+
+INSPECT STATE
+  # all tickets + statuses
+  aws dynamodb scan --table-name ticketpilot-tickets --region us-east-1
+
+TEARDOWN
+  aws cloudformation delete-stack --stack-name ticketpilot --region us-east-1
+  aws ecr delete-repository --repository-name ticketpilot --force --region us-east-1
