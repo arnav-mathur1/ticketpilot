@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TicketPilot</title>
+<style>
+  :root { --bg:#0f1420; --card:#1a2130; --line:#2b3446; --fg:#e7ecf3; --mut:#93a0b4;
+          --accent:#5b8cff; --good:#2fbf71; --bad:#e5544b; --warn:#f0a132; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+         background:var(--bg); color:var(--fg); }
+  header { padding:22px 20px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:20px; }
+  header p { margin:4px 0 0; color:var(--mut); font-size:13px; }
+  main { max-width:1040px; margin:0 auto; padding:20px; display:grid; gap:18px;
+         grid-template-columns:1fr 1fr; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .card.wide { grid-column:1 / -1; }
+  h2 { margin:0 0 10px; font-size:15px; }
+  h2 small { color:var(--mut); font-weight:400; }
+  textarea, input { width:100%; background:#0d1220; color:var(--fg); border:1px solid var(--line);
+                    border-radius:8px; padding:9px; font:inherit; resize:vertical; }
+  button { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:9px 14px;
+           font:inherit; cursor:pointer; margin-top:8px; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--fg); }
+  button.good { background:var(--good); } button.bad { background:var(--bad); }
+  button:disabled { opacity:.5; cursor:default; }
+  .out { margin-top:10px; font-size:14px; white-space:pre-wrap; }
+  .cite { color:var(--mut); font-size:12px; margin-top:6px; }
+  .tag { display:inline-block; font-size:11px; padding:2px 7px; border-radius:20px;
+         border:1px solid var(--line); margin-right:5px; }
+  .u-high{color:var(--bad);border-color:var(--bad)} .u-medium{color:var(--warn);border-color:var(--warn)}
+  .u-low{color:var(--good);border-color:var(--good)}
+  .ticket { border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px; }
+  .ticket .txt { margin:6px 0; } .reason { color:var(--warn); font-size:12px; }
+  .reply { color:var(--mut); font-size:13px; border-left:2px solid var(--line); padding-left:8px; margin-top:8px; }
+  .muted { color:var(--mut); font-size:13px; }
+  @media (max-width:760px){ main{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header>
+  <h1>TicketPilot</h1>
+  <p>Support-ticket triage &amp; policy Q&amp;A — LangGraph + RAG on serverless AWS (Lambda · SQS · DynamoDB)</p>
+</header>
+<main>
+  <!-- Policy Q&A -->
+  <section class="card">
+    <h2>Ask a policy question <small>· RAG, grounded + cited</small></h2>
+    <textarea id="q" rows="3" placeholder="e.g. What is the refund window for a subscription?"></textarea>
+    <button id="askBtn" onclick="ask()">Ask</button>
+    <div id="ans" class="out"></div>
+  </section>
+
+  <!-- Ticket intake -->
+  <section class="card">
+    <h2>Submit a ticket <small>· async triage via SQS</small></h2>
+    <textarea id="t" rows="3" placeholder="e.g. I was double-charged and can't log in to my account."></textarea>
+    <button id="subBtn" onclick="submitTicket()">Submit</button>
+    <div id="sub" class="out"></div>
+    <p class="muted">Triage runs in the background, then escalated tickets appear below.</p>
+  </section>
+
+  <!-- Approval queue -->
+  <section class="card wide">
+    <h2>Human-approval queue <small>· tickets the agent flagged for review</small></h2>
+    <button class="ghost" onclick="loadQueue()">Refresh</button>
+    <div id="queue" class="out"></div>
+  </section>
+</main>
+
+<script>
+const API = "https://09pwu1pms1.execute-api.us-east-1.amazonaws.com";
+
+async function call(path, method, body) {
+  const r = await fetch(API + path, {
+    method,
+    headers: body ? {"Content-Type": "application/json"} : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return r.json();
+}
+
+async function ask() {
+  const q = document.getElementById("q").value.trim();
+  if (!q) return;
+  const btn = document.getElementById("askBtn"), out = document.getElementById("ans");
+  btn.disabled = true; out.textContent = "Thinking…";
+  try {
+    const d = await call("/ask", "POST", {question: q});
+    out.innerHTML = d.refused
+      ? '<span class="muted">' + d.answer + '</span>'
+      : d.answer + '<div class="cite">Sources: ' +
+        (d.citations||[]).map(c => c.source + " :: " + c.section).join(" · ") + '</div>';
+  } catch (e) { out.textContent = "Error: " + e; }
+  btn.disabled = false;
+}
+
+async function submitTicket() {
+  const t = document.getElementById("t").value.trim();
+  if (!t) return;
+  const btn = document.getElementById("subBtn"), out = document.getElementById("sub");
+  btn.disabled = true; out.textContent = "Queuing…";
+  try {
+    const d = await call("/tickets", "POST", {text: t});
+    out.innerHTML = 'Queued as <b>' + d.ticket_id + '</b>. Refresh the queue in a few seconds.';
+    document.getElementById("t").value = "";
+    setTimeout(loadQueue, 4000);
+  } catch (e) { out.textContent = "Error: " + e; }
+  btn.disabled = false;
+}
+
+async function loadQueue() {
+  const out = document.getElementById("queue");
+  out.textContent = "Loading…";
+  try {
+    const d = await call("/approvals", "GET");
+    const items = d.pending || [];
+    if (!items.length) { out.innerHTML = '<span class="muted">Queue is empty.</span>'; return; }
+    out.innerHTML = items.map(t => `
+      <div class="ticket">
+        <b>${t.id}</b>
+        <span class="tag u-${t.urgency}">${t.urgency}</span>
+        <span class="tag">${t.category}</span>
+        <span class="tag">${t.sentiment}</span>
+        <span class="tag">conf ${t.confidence}</span>
+        <div class="txt">${t.text}</div>
+        <div class="reason">⚑ ${t.reason}</div>
+        <div class="reply">${(t.draft_reply||"").replace(/\n/g,"<br>")}</div>
+        <button class="good" onclick="decide('${t.id}','approve')">Approve</button>
+        <button class="bad"  onclick="decide('${t.id}','reject')">Reject</button>
+      </div>`).join("");
+  } catch (e) { out.textContent = "Error: " + e; }
+}
+
+async function decide(id, decision) {
+  await call("/approvals/" + id + "/" + decision, "POST");
+  loadQueue();
+}
+
+loadQueue();
+</script>
+</body>
+</html>

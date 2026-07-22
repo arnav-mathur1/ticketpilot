@@ -28,6 +28,13 @@ Globals:
         OPENAI_EMBED_MODEL: text-embedding-3-small
         # Key is stored in SSM (never in code); resolved at deploy time.
         OPENAI_API_KEY: !Sub '{{resolve:ssm:${OpenAiSsmPath}}}'
+  HttpApi:
+    # Browser preflight (OPTIONS) is answered by API Gateway; the dashboard is served
+    # from a different origin (CloudFront), so allow cross-origin calls.
+    CorsConfiguration:
+      AllowOrigins: ["*"]
+      AllowHeaders: ["content-type"]
+      AllowMethods: ["GET", "POST", "OPTIONS"]
 
 Resources:
   # ---- messaging: async intake + dead-letter safety net ----
@@ -121,10 +128,67 @@ Resources:
           Type: HttpApi
           Properties: {Path: "/approvals/{ticket_id}/{decision}", Method: POST}
 
+  # ---- Phase 7: dashboard hosting (private S3 bucket served via CloudFront/HTTPS) ----
+  DashboardBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  DashboardOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: ticketpilot-dashboard-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  DashboardCDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        Origins:
+          - Id: dashboard
+            DomainName: !GetAtt DashboardBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt DashboardOAC.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        DefaultCacheBehavior:
+          TargetOriginId: dashboard
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: ["GET", "HEAD"]
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6   # AWS managed: CachingOptimized
+
+  DashboardBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DashboardBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: cloudfront.amazonaws.com}
+            Action: s3:GetObject
+            Resource: !Sub "${DashboardBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${DashboardCDN.Id}"
+
 Outputs:
   ApiUrl:
     Description: Base URL of the HTTP API (append /tickets, /ask, /approvals).
     Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  DashboardUrl:
+    Description: Public HTTPS URL of the dashboard.
+    Value: !Sub "https://${DashboardCDN.DomainName}"
+  DashboardBucketName:
+    Value: !Ref DashboardBucket
   QueueUrl:
     Value: !Ref TicketQueue
   TableName:

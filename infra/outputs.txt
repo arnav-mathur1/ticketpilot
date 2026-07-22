@@ -1,0 +1,21 @@
+TicketPilot — deployed AWS stack
+Region: us-east-1   Stack: ticketpilot
+
+Dashboard (CloudFront/HTTPS):  https://d2m9tsplwhuev5.cloudfront.net
+  Upload page:  aws s3 cp dashboard/index.html s3://ticketpilot-dashboardbucket-6vvmwq2cyiiv/index.html --content-type text/html
+
+API base:  https://09pwu1pms1.execute-api.us-east-1.amazonaws.com
+  POST /ask       {"question": "..."}              -> grounded RAG answer + citations
+  POST /tickets   {"text": "...", "id": "..."}     -> enqueue ticket (async triage)
+  GET  /approvals                                  -> list pending (escalated) tickets
+  POST /approvals/{ticket_id}/{decision}           -> decision = approve | reject
+
+DynamoDB table: ticketpilot-tickets      SQS queue: ticketpilot-tickets (+ -dlq)
+
+Redeploy:  AWS_REGION=us-east-1 bash infra/deploy.sh
+Teardown:  aws cloudformation delete-stack --stack-name ticketpilot --region us-east-1
+           aws ecr delete-repository --repository-name ticketpilot --force --region us-east-1
+
+NOTE: endpoints are public (no auth). Each /ask and /tickets call spends OpenAI credits;
+      the zero-spend + $5 budget alerts cap the blast radius. Tear down when not demoing.
+      The API base URL only changes if the stack is deleted and recreated (updates keep it).

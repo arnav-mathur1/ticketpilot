@@ -11,7 +11,7 @@ import uuid
 from .triage_agent.handler import approve_ticket, reject_ticket
 from .shared import store
 
-_CORS = {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"}
+_CORS = {"Content-Type": "application/json"}   # CORS handled at the HTTP API level
 
 
 def intake_handler(event, context):

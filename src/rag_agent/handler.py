@@ -3,7 +3,7 @@ import json
 
 from .answer import answer_question
 
-_CORS = {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"}
+_CORS = {"Content-Type": "application/json"}   # CORS handled at the HTTP API level
 
 
 def handler(event, context):
