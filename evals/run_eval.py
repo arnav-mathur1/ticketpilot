@@ -58,7 +58,7 @@ def eval_rag(limit: int | None = None) -> dict:
     scores: list[int] = []
     cite_hits = n_ans = refuse_ok = n_unans = 0
     for i, q in enumerate(questions, 1):
-        r = answer_question(q["question"])
+        r = answer_question(q["question"], use_cache=False)   # measure the model, not the cache
         if q["unanswerable"]:
             n_unans += 1
             refuse_ok += int(r["refused"])

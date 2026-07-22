@@ -24,8 +24,16 @@ SAMPLE_TICKETS = DATA_DIR / "sample_tickets.json"
 POLICY_DIR = Path(os.getenv("POLICY_DIR", DATA_DIR / "policies"))
 
 # --- RAG / cache ---
-CACHE_DIR = ROOT / ".cache"
+CACHE_DIR = ROOT / ".cache"          # bundled, read-only policy index lives here
 CHUNK_MAX_CHARS = 1200
+
+# --- Caching + usage (Phase 8) ---
+# Runtime caches must be written somewhere writable; the Lambda image is read-only
+# except for /tmp, so redirect there when running on Lambda.
+_IN_LAMBDA = bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+RUNTIME_CACHE_DIR = Path("/tmp/ticketpilot-cache") if _IN_LAMBDA else CACHE_DIR
+SEMANTIC_CACHE_THRESHOLD = float(os.getenv("SEMANTIC_CACHE_THRESHOLD", "0.95"))
+USAGE_LOG = RUNTIME_CACHE_DIR / "usage_log.jsonl"
 
 # --- Storage backend: "local" JSON files ($0) or "aws" DynamoDB ---
 BACKEND = os.getenv("TICKETPILOT_BACKEND", "local")

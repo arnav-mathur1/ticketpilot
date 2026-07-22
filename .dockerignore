@@ -15,4 +15,8 @@ dashboard/
 .idea/
 .DS_Store
 node_modules/
-# NOTE: .cache/ (policy index) and data/policies/ are intentionally NOT ignored.
+# NOTE: .cache/ (policy index) and data/policies/ are intentionally NOT ignored,
+# but the *runtime* caches below are local-only (Lambda writes them to /tmp).
+.cache/embeddings.json
+.cache/query_cache.json
+.cache/usage_log.jsonl
