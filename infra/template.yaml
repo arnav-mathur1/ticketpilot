@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  TicketPilot — serverless triage + RAG. One container image shared by
+  four Lambdas: intake -> SQS -> triage -> DynamoDB, plus a RAG /ask endpoint and
+  an approvals API. Sized for the AWS free tier. Tear down with:  sam delete
+  (or aws cloudformation delete-stack --stack-name ticketpilot).
+
+Parameters:
+  ImageUri:
+    Type: String
+    Description: ECR image URI (built + pushed by infra/deploy.sh) shared by all functions.
+  OpenAiSsmPath:
+    Type: String
+    Default: /ticketpilot/openai-api-key
+    Description: SSM parameter holding the OpenAI API key (created before deploy).
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 512            # free tier: 400,000 GB-seconds/month
+    Architectures: [arm64]
+    Environment:
+      Variables:
+        TICKETPILOT_BACKEND: aws
+        DDB_TICKETS_TABLE: !Ref TicketsTable
+        OPENAI_MODEL: gpt-4o-mini
+        OPENAI_EMBED_MODEL: text-embedding-3-small
+        # Key is stored in SSM (never in code); resolved at deploy time.
+        OPENAI_API_KEY: !Sub '{{resolve:ssm:${OpenAiSsmPath}}}'
+
+Resources:
+  # ---- messaging: async intake + dead-letter safety net ----
+  TicketQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ticketpilot-tickets
+      VisibilityTimeout: 120          # >= 2x function timeout
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt TicketDLQ.Arn
+        maxReceiveCount: 3
+  TicketDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ticketpilot-tickets-dlq
+
+  # ---- data: approval-queue records (on-demand billing = pay-per-request) ----
+  TicketsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ticketpilot-tickets
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: id, AttributeType: S}
+      KeySchema:
+        - {AttributeName: id, KeyType: HASH}
+
+  # ---- POST /tickets : accept a ticket, enqueue for async triage ----
+  IntakeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      ImageConfig:
+        Command: ["src.api.intake_handler"]
+      Environment:
+        Variables:
+          QUEUE_URL: !Ref TicketQueue
+      Policies:
+        - SQSSendMessagePolicy: {QueueName: !GetAtt TicketQueue.QueueName}
+      Events:
+        Submit:
+          Type: HttpApi
+          Properties: {Path: /tickets, Method: POST}
+
+  # ---- SQS -> triage graph -> DynamoDB ----
+  TriageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      ImageConfig:
+        Command: ["src.triage_agent.handler.handler"]
+      Policies:
+        - DynamoDBCrudPolicy: {TableName: !Ref TicketsTable}
+      Events:
+        FromQueue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt TicketQueue.Arn
+            BatchSize: 5
+
+  # ---- POST /ask : grounded RAG answer from the bundled policy index ----
+  RagFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      ImageConfig:
+        Command: ["src.rag_agent.handler.handler"]
+      Events:
+        Ask:
+          Type: HttpApi
+          Properties: {Path: /ask, Method: POST}
+
+  # ---- GET /approvals + POST /approvals/{ticket_id}/{decision} ----
+  ApprovalsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      ImageConfig:
+        Command: ["src.api.approvals_handler"]
+      Policies:
+        - DynamoDBCrudPolicy: {TableName: !Ref TicketsTable}
+      Events:
+        List:
+          Type: HttpApi
+          Properties: {Path: /approvals, Method: GET}
+        Decide:
+          Type: HttpApi
+          Properties: {Path: "/approvals/{ticket_id}/{decision}", Method: POST}
+
+Outputs:
+  ApiUrl:
+    Description: Base URL of the HTTP API (append /tickets, /ask, /approvals).
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  QueueUrl:
+    Value: !Ref TicketQueue
+  TableName:
+    Value: !Ref TicketsTable

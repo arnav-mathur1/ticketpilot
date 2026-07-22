@@ -23,6 +23,11 @@ SAMPLE_TICKETS = DATA_DIR / "sample_tickets.json"
 # POLICY_DIR is overridable so you can swap in a different corpus later (Phase 3+)
 POLICY_DIR = Path(os.getenv("POLICY_DIR", DATA_DIR / "policies"))
 
-# --- RAG / cache (used from Phase 3 onward) ---
+# --- RAG / cache ---
 CACHE_DIR = ROOT / ".cache"
 CHUNK_MAX_CHARS = 1200
+
+# --- Storage backend: "local" JSON files ($0) or "aws" DynamoDB ---
+BACKEND = os.getenv("TICKETPILOT_BACKEND", "local")
+DDB_TICKETS_TABLE = os.getenv("DDB_TICKETS_TABLE", "ticketpilot-tickets")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")   # Lambda sets AWS_REGION automatically

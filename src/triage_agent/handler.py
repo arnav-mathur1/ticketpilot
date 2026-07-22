@@ -1,3 +1,5 @@
+import json
+
 from ..shared import store
 from .graph import run_triage
 from .escalation import should_escalate
@@ -27,3 +29,15 @@ def approve_ticket(ticket_id: str) -> dict:
 
 def reject_ticket(ticket_id: str) -> dict:
     return store.set_status(ticket_id, store.REJECTED)
+
+
+def handler(event, context):
+    """SQS-triggered Lambda entrypoint (Phase 6).
+
+    Each SQS record is {"ticket_id": ..., "text": ...}. Raising on failure lets
+    SQS redeliver the message (at-least-once, retry-safe processing).
+    """
+    for record in event.get("Records", []):
+        body = json.loads(record["body"])
+        process_ticket(body["ticket_id"], body["text"])
+    return {"statusCode": 200}

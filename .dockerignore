@@ -1,0 +1,18 @@
+# Keep the build context small — never ship the venv or git history.
+.venv/
+venv/
+.git/
+.github/
+.aws-sam/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+tests/
+evals/
+docs/
+dashboard/
+.vscode/
+.idea/
+.DS_Store
+node_modules/
+# NOTE: .cache/ (policy index) and data/policies/ are intentionally NOT ignored.
