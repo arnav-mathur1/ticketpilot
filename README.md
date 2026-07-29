@@ -15,8 +15,6 @@ Three things to try:
 2. **Submit a ticket** — e.g. *"I was double-charged and I'm locked out"* → it gets classified and queued in the background.
 3. **Work the approval queue** — the ticket you submitted shows up (if the AI flagged it), with a draft reply. Click **Approve** or **Reject**.
 
-*(The demo is on AWS free tier and may be turned off to save cost — if the link is down, see [Run it yourself](#run-it-yourself). It redeploys with one command.)*
-
 ---
 
 ## What it does
@@ -60,8 +58,6 @@ flowchart TD
 3. A human opens the **approval queue**, reads the AI's draft, and clicks approve/reject — recorded back to DynamoDB.
 4. Separately, the **RAG** function answers policy questions by retrieving the most relevant policy chunk and forcing the model to answer *only* from it, with a citation.
 
-Everything is **serverless** — nothing runs until a request comes in, so it costs ~$0 when idle.
-
 ---
 
 ## Tech stack
@@ -71,7 +67,6 @@ Everything is **serverless** — nothing runs until a request comes in, so it co
 - **Validation:** Pydantic (the LLM must return valid, schema-checked JSON; invalid output is auto-retried)
 - **AWS (serverless):** Lambda (×4, one shared **arm64 container image**), API Gateway, SQS (+ dead-letter queue), DynamoDB, S3 + CloudFront, SSM, CloudWatch
 - **Infra as code:** AWS SAM (`infra/template.yaml`), one-command deploy
-- **Quality:** eval harness + LLM-as-judge, semantic response caching, structured JSON logging, pytest + GitHub Actions CI
 
 ---
 
