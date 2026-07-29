@@ -4,8 +4,6 @@
 
 **An AI support system that reads incoming customer tickets, sorts them, drafts replies, and asks a human to approve only the risky ones — plus a chatbot that answers policy questions with citations.** Built as two small AI "agents" running on serverless AWS.
 
-> In plain terms: it does the boring 80% of a support inbox automatically, and taps a human on the shoulder for the sensitive 20%.
-
 ---
 
 ## 🚀 Try it live
