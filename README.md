@@ -1,117 +1,188 @@
 # TicketPilot
 
-![CI](https://github.com/arnav-mathur1/ticketpilot/actions/workflows/ci.yml/badge.svg)
+TicketPilot is an AI-powered customer support system that automatically triages incoming support tickets, drafts responses, escalates risky cases for human review, and answers policy questions using retrieval-augmented generation.
 
-**An AI support system that reads incoming customer tickets, sorts them, drafts replies, and asks a human to approve only the risky ones — plus a chatbot that answers policy questions with citations.** Built as two small AI "agents" running on serverless AWS.
+Live demo: https://d2m9tsplwhuev5.cloudfront.net
 
----
+## Overview
 
-## 🚀 Try it live
+TicketPilot contains two AI workflows:
 
-**Dashboard: [https://d2m9tsplwhuev5.cloudfront.net](https://d2m9tsplwhuev5.cloudfront.net)**
+### Ticket Triage Agent
 
-Three things to try:
-1. **Ask a policy question** — e.g. *"What is the refund window?"* → get an answer **with the exact policy source cited** (and it says "I don't know" if the answer isn't in the docs, instead of making something up).
-2. **Submit a ticket** — e.g. *"I was double-charged and I'm locked out"* → it gets classified and queued in the background.
-3. **Work the approval queue** — the ticket you submitted shows up (if the AI flagged it), with a draft reply. Click **Approve** or **Reject**.
+The triage system processes incoming customer support tickets and:
 
----
+* Classifies category, urgency, and sentiment
+* Generates a draft response
+* Detects sensitive or low-confidence cases
+* Routes higher-risk tickets to a human approval queue
+* Stores ticket status and approval decisions in DynamoDB
 
-## What it does
+Tickets are processed asynchronously using Amazon SQS so incoming traffic can be buffered and handled independently of the web request.
 
-TicketPilot is **two independent AI agents**:
+The agent workflow is implemented using LangGraph and uses Pydantic schemas to validate structured LLM outputs.
 
-| Agent | What it's for | How it behaves |
-|-------|--------------|----------------|
-| 🎫 **Triage agent** | Handle incoming support tickets | Reads a ticket → labels it (**category, urgency, sentiment**) → **drafts a reply** → decides: safe to auto-send, or **escalate to a human**. |
-| 📚 **Policy Q&A agent (RAG)** | Answer questions about company policy | Finds the relevant policy passage → answers **only** from that text → **cites the source** → refuses if the answer isn't in the docs. |
+### Policy Q&A Agent
 
-The key idea is **human-in-the-loop**: the AI does the volume, but anything low-confidence or sensitive (billing, fraud, "I'll call my lawyer"…) is held for a human to approve. Humans never see the easy stuff.
+The policy Q&A system uses retrieval-augmented generation to answer questions using company policy documents.
 
----
+The pipeline:
 
-## How it works
+1. Splits policy documents into searchable chunks
+2. Generates embeddings using OpenAI embeddings
+3. Stores and searches vectors using FAISS
+4. Retrieves the most relevant policy text
+5. Generates an answer grounded only in the retrieved context
+6. Returns the answer with its source citation
 
-```mermaid
-flowchart TD
-    U([Customer]) -->|web browser| D[Dashboard<br/>S3 + CloudFront]
-    D -->|HTTPS| API[API Gateway]
+If the retrieved documentation does not support an answer, the system returns that it does not know rather than generating an unsupported response.
 
-    API -->|POST /ask| RAG[RAG Lambda]
-    RAG -->|find + cite passage| IDX[(Policy index<br/>FAISS)]
+## Architecture
 
-    API -->|POST /tickets| IN[Intake Lambda]
-    IN -->|queue it| Q[[SQS queue]]
-    Q --> TR[Triage Lambda<br/>classify → draft → gate]
-    TR -->|store result| DB[(DynamoDB)]
+The application is deployed as a serverless AWS system.
 
-    API -->|approve / reject| AP[Approvals Lambda]
-    AP <-->|read + update| DB
+Customer requests are sent through API Gateway to AWS Lambda functions.
 
-    RAG -->|ask the model| OAI{{OpenAI gpt-4o-mini}}
-    TR -->|ask the model| OAI
-```
+Ticket processing follows:
 
-**The flow, step by step:**
-1. A customer submits a ticket on the dashboard → it hits **API Gateway** → a small **Intake** function drops it on an **SQS queue** (so bursts don't overwhelm anything).
-2. The **Triage** function picks it up, uses **LangGraph** to run *classify → draft reply*, then an **escalation gate** decides auto-send vs. human review. The result is saved in **DynamoDB**.
-3. A human opens the **approval queue**, reads the AI's draft, and clicks approve/reject — recorded back to DynamoDB.
-4. Separately, the **RAG** function answers policy questions by retrieving the most relevant policy chunk and forcing the model to answer *only* from it, with a citation.
+Dashboard -> API Gateway -> Intake Lambda -> SQS -> Triage Lambda -> DynamoDB
 
----
+Human approval follows:
 
-## Tech stack
+Dashboard -> API Gateway -> Approvals Lambda -> DynamoDB
 
-- **Agents / LLM:** Python, [LangGraph](https://langchain-ai.github.io/langgraph/), OpenAI `gpt-4o-mini` + `text-embedding-3-small`
-- **RAG:** FAISS vector search, chunk-and-cite grounding with a refusal guarantee
-- **Validation:** Pydantic (the LLM must return valid, schema-checked JSON; invalid output is auto-retried)
-- **AWS (serverless):** Lambda (×4, one shared **arm64 container image**), API Gateway, SQS (+ dead-letter queue), DynamoDB, S3 + CloudFront, SSM, CloudWatch
-- **Infra as code:** AWS SAM (`infra/template.yaml`), one-command deploy
+Policy questions follow:
 
----
+Dashboard -> API Gateway -> RAG Lambda -> FAISS retrieval -> OpenAI model
 
-## Run it yourself
+The frontend is hosted using Amazon S3 and CloudFront.
 
-**Locally (no AWS needed):**
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env         # add your OpenAI API key
+## Tech Stack
 
-python -m src.rag_agent.ingest        # build the policy index
-python scripts/cache_demo.py          # see the RAG agent + caching in action
-python -m pytest                      # run the tests
-python evals/run_eval.py --label demo # score both agents
-```
+Python
 
-**Deploy to AWS (needs an AWS account + Docker):**
-```bash
-# one-time: put your OpenAI key in SSM
-aws ssm put-parameter --name /ticketpilot/openai-api-key --type String --value "sk-..." --overwrite
+LangGraph
 
-bash infra/deploy.sh          # builds the image, pushes to ECR, creates the stack
-# ...prints your API + dashboard URLs
+OpenAI API
 
-aws cloudformation delete-stack --stack-name ticketpilot   # tear it all down
-```
+* gpt-4o-mini
+* text-embedding-3-small
 
----
+AI / Retrieval
 
-## Project structure
+* FAISS
+* Pydantic
+* Retrieval-Augmented Generation
 
-```
+AWS
+
+* Lambda
+* API Gateway
+* SQS
+* DynamoDB
+* S3
+* CloudFront
+* SSM Parameter Store
+* CloudWatch
+* ECR
+
+Infrastructure / Development
+
+* AWS SAM
+* Docker
+* pytest
+* GitHub Actions
+
+## Project Structure
+
 src/
-  triage_agent/   classify → draft (LangGraph) + escalation gate + Lambda handler
-  rag_agent/      ingest → retrieve → cited answer + Lambda handler
-  shared/         config, LLM wrapper, Pydantic models, store, cache, logging
-  api.py          intake + approvals HTTP handlers
-infra/            SAM template, Dockerfile, deploy script
-evals/            golden sets + scoring harness (accuracy + LLM-as-judge)
-dashboard/        single-file web UI
-tests/            pytest unit tests (run in CI)
-docs/             project brief + ops runbook
+
+* triage_agent/ - ticket classification, response drafting, escalation logic, Lambda handler
+* rag_agent/ - document ingestion, retrieval, grounded answer generation, Lambda handler
+* shared/ - configuration, LLM utilities, schemas, storage, caching, and logging
+* api.py - ticket intake and approval API handlers
+
+infra/
+
+* AWS SAM infrastructure
+* Docker image configuration
+* deployment scripts
+
+evals/
+
+* evaluation datasets
+* classification metrics
+* LLM response evaluation
+
+dashboard/
+
+* web interface for ticket submission, policy questions, and human approvals
+
+tests/
+
+* automated unit tests
+
+docs/
+
+* project documentation and operations notes
+
+## Running Locally
+
+Create a Python environment and install dependencies:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Add an OpenAI API key to `.env`.
+
+Build the policy search index:
+
+```bash
+python -m src.rag_agent.ingest
+```
+
+Run the RAG demo:
+
+```bash
+python scripts/cache_demo.py
+```
+
+Run tests:
+
+```bash
+python -m pytest
+```
+
+Run evaluations:
+
+```bash
+python evals/run_eval.py --label demo
+```
+
+## Deployment
+
+The application can be deployed to AWS using the included SAM infrastructure and Docker configuration.
+
+Store the OpenAI API key in AWS Systems Manager Parameter Store:
+
+```bash
+aws ssm put-parameter \
+  --name /ticketpilot/openai-api-key \
+  --type String \
+  --value "YOUR_KEY" \
+  --overwrite
+```
+
+Deploy:
+
+```bash
+bash infra/deploy.sh
 ```
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT License.
